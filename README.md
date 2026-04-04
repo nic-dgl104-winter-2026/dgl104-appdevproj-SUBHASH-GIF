@@ -2,12 +2,12 @@
 # DGL 104 - Task Management System (TMS)
 ## Introduction
 
+A web-based Task Management System built individually for DGL 104 - Application Development at North Island College. The app allows users to create, assign, track, and manage tasks using HTML, CSS, and JavaScript.
+
 ## Tech Stack
-- PHP
 - HTML
 - CSS
 - JavaScript
-- Etc.
 
 ## Unique Features
 
