@@ -5,9 +5,282 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TMS — Task Management System</title>
   <link rel="stylesheet" href="css/styles.css" />
+
+  <!-- Chart.js from CDN for the pie/doughnut chart -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
-    
+
+  <!--
+       LOGIN SCREEN
+       First thing users see. Uses Factory Pattern to create
+       the correct user type based on role selection.-->
+  <div id="login-screen">
+    <div class="login-card">
+      <h1>📋 TMS</h1>
+      <p>Task Management System — Sign in to continue</p>
+
+      <div class="form-group">
+        <label>Your Name</label>
+        <input type="text" id="login-name" placeholder="e.g. Alex Johnson" />
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="e.g. alex@company.com" />
+      </div>
+
+      <div class="form-group">
+        <label>Role</label>
+        <!-- FACTORY PATTERN: choosing a role triggers UserFactory.create() -->
+        <select id="login-role">
+          <option value="Admin">Admin</option>
+          <option value="Manager">Manager</option>
+          <option value="Developer" selected>Developer</option>
+          <option value="Tester">Tester</option>
+        </select>
+      </div>
+
+      <button class="btn-primary" onclick="login()">Sign In →</button>
+    </div>
+  </div>
+
+
+  <!--
+       MAIN APP
+       Only visible after login.
+       -->
+  <div id="app">
+
+    <!-- ---- HEADER ---- -->
+    <header>
+      <div class="header-left">
+        <div class="logo">📋 TMS <span>/ Task Manager</span></div>
+      </div>
+
+      <div class="header-right">
+        <!-- COMMAND PATTERN: Undo / Redo buttons -->
+        <button class="btn-sm" id="btn-undo" onclick="undoAction()" disabled title="Ctrl+Z">↩ Undo</button>
+        <button class="btn-sm" id="btn-redo" onclick="redoAction()" disabled title="Ctrl+Y">↪ Redo</button>
+
+        <!-- User info pill -->
+        <div class="user-pill">
+          <div class="user-avatar" id="user-avatar">?</div>
+          <span id="user-name">User</span>
+          <span id="user-role">Role</span>
+        </div>
+        <button class="btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </header>
+
+
+    <!-- ---- MAIN CONTENT ---- -->
+    <main>
+
+      <!-- STATS CARDS -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="stat-total">0</div>
+          <div class="stat-label">Total Tasks</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="stat-todo" style="color:#f59e0b">0</div>
+          <div class="stat-label">To Do</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="stat-progress" style="color:#6366f1">0</div>
+          <div class="stat-label">In Progress</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="stat-done" style="color:#10b981">0</div>
+          <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="stat-high" style="color:#ef4444">0</div>
+          <div class="stat-label">High Priority</div>
+        </div>
+      </div>
+
+      <!-- DASHBOARD ROW: tasks area + chart -->
+      <div class="dashboard-row">
+
+        <!-- LEFT: the actual task views -->
+        <div>
+
+          <!-- TOOLBAR -->
+          <div class="toolbar">
+            <!-- View switcher buttons -->
+            <button class="view-btn active" data-view="kanban" onclick="switchView('kanban')">🗂️ Kanban</button>
+            <button class="view-btn" data-view="list"   onclick="switchView('list')">📋 List</button>
+            <button class="view-btn" data-view="calendar" onclick="switchView('calendar')">📅 Calendar</button>
+
+            <!-- STRATEGY PATTERN: choose how tasks get sorted -->
+            <select class="strategy-select" onchange="changeStrategy(this.value)" title="Sort Strategy">
+              <option value="manual">Sort: Manual</option>
+              <option value="priority">Sort: Priority</option>
+              <option value="deadline">Sort: Deadline</option>
+              <option value="ai">Sort: AI Smart</option>
+            </select>
+
+            <!-- Search -->
+            <input type="text" id="search-input" placeholder="🔍 Search tasks..." oninput="filterTasks()" />
+
+            <!-- Add Task button -->
+            <button class="btn-add" onclick="openCreateModal()">＋ New Task</button>
+          </div>
+
+          <!-- ---- KANBAN VIEW ---- -->
+          <div id="kanban-view">
+            <!-- To Do Column -->
+            <div class="kanban-col">
+              <div class="col-header">
+                <span class="col-title" style="color:#f59e0b">⬜ To Do</span>
+              </div>
+              <div id="col-To-Do"></div>
+            </div>
+
+            <!-- In Progress Column -->
+            <div class="kanban-col">
+              <div class="col-header">
+                <span class="col-title" style="color:#6366f1">🔄 In Progress</span>
+              </div>
+              <div id="col-In-Progress"></div>
+            </div>
+
+            <!-- Completed Column -->
+            <div class="kanban-col">
+              <div class="col-header">
+                <span class="col-title" style="color:#10b981">✅ Completed</span>
+              </div>
+              <div id="col-Completed"></div>
+            </div>
+          </div>
+
+          <!-- ---- LIST VIEW ---- -->
+          <div id="list-view" style="display:none">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>Due Date</th>
+                  <th>Assigned To</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="list-tbody"></tbody>
+            </table>
+          </div>
+
+          <!-- ---- CALENDAR VIEW ---- -->
+          <div id="calendar-view" style="display:none">
+            <h2 id="calendar-title"></h2>
+            <div class="cal-weekdays">
+              <span>Sun</span><span>Mon</span><span>Tue</span>
+              <span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+            </div>
+            <div id="calendar-grid"></div>
+          </div>
+
+        </div><!-- end left -->
+
+        <!-- RIGHT: Doughnut chart -->
+        <div class="chart-card">
+          <h3>Task Status</h3>
+          <canvas id="task-chart"></canvas>
+        </div>
+
+      </div><!-- end dashboard-row -->
+
+    </main>
+
+  </div><!-- end #app -->
+
+
+  <!--
+       TASK MODAL (Create / Edit)
+       -->
+  <div class="modal-overlay" id="task-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Create Task</h2>
+        <button class="btn-close" onclick="closeModal()">✕</button>
+      </div>
+
+      <div id="task-form">
+        <div class="form-group">
+          <label>Task Title *</label>
+          <input type="text" id="f-title" placeholder="What needs to be done?" />
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="f-desc" placeholder="Optional details..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Assigned To</label>
+            <input type="text" id="f-assigned" placeholder="e.g. John" />
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <select id="f-priority">
+              <option value="High">🔴 High</option>
+              <option value="Medium" selected>🟡 Medium</option>
+              <option value="Low">🟢 Low</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Status</label>
+            <select id="f-status">
+              <option value="To Do">To Do</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Due Date</label>
+            <input type="date" id="f-due" />
+          </div>
+        </div>
+
+        <!-- DECORATOR PATTERN: these fields "decorate" tasks with extra features -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>🏷️ Tags (comma separated)</label>
+            <input type="text" id="f-tags" placeholder="e.g. frontend, urgent" />
+          </div>
+          <div class="form-group">
+            <label>⏰ Reminder Date</label>
+            <input type="date" id="f-reminder" />
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn-save" onclick="saveTask()">Save Task</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Toast notification container (Observer pattern output) -->
+  <div id="toast-container"></div>
+
+
+  <!--
+       SCRIPTS — load in order (patterns first, then logic)
+        -->
+  <script src="js/patterns.js"></script>
+  <script src="js/taskManager.js"></script>
+  <script src="js/app.js"></script>
+
 </body>
 </html>
