@@ -84,3 +84,20 @@ class UserFactory {
 }
 
 
+// 3. OBSERVER PATTERN — notifies subscribers when tasks change
+class NotificationSystem {
+  constructor() {
+    this.observers = [];
+  }
+
+  subscribe(fn) {
+    this.observers.push(fn);
+  }
+
+  notify(event, data) {
+    this.observers.forEach(fn => fn(event, data));
+  }
+}
+
+const notifier = new NotificationSystem();
+
