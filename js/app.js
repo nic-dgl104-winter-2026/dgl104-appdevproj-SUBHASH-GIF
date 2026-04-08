@@ -141,3 +141,44 @@ function buildCard(task) {
     </div>`;
 }
 
+function renderList() {
+  const tbody = document.getElementById("list-tbody");
+  tbody.innerHTML = "";
+  sorter.sort(taskMgr.getAll()).forEach(task => {
+    const due = task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "-";
+    tbody.innerHTML += `
+      <tr>
+        <td>${task.title}</td>
+        <td><span class="badge-priority ${task.priority.toLowerCase()}">${task.priority}</span></td>
+        <td>${task.status}</td>
+        <td>${due}</td>
+        <td>${task.assignedTo || "-"}</td>
+        <td>
+          <button class="btn-icon"        onclick="openEditModal('${task.id}')">✏️</button>
+          <button class="btn-icon danger" onclick="deleteTask('${task.id}')">🗑️</button>
+        </td>
+      </tr>`;
+  });
+}
+
+function renderCalendar() {
+  const now   = new Date();
+  const year  = now.getFullYear();
+  const month = now.getMonth();
+  document.getElementById("calendar-title").textContent = now.toLocaleString("default", { month: "long", year: "numeric" });
+  const firstDay    = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const grid        = document.getElementById("calendar-grid");
+  grid.innerHTML    = "";
+  for (let i = 0; i < firstDay; i++) grid.innerHTML += '<div class="cal-day empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr  = year + "-" + String(month + 1).padStart(2, "0") + "-" + String(d).padStart(2, "0");
+    const isToday  = d === now.getDate();
+    const dots     = taskMgr.getAll()
+      .filter(t => t.dueDate && t.dueDate.startsWith(dateStr))
+      .map(t => '<span class="cal-dot" style="background:' + ({ High: "#ef4444", Medium: "#f59e0b", Low: "#10b981" }[t.priority]) + '"></span>')
+      .join("");
+    grid.innerHTML += `<div class="cal-day ${isToday ? "today" : ""}"><span class="cal-day-num">${d}</span><div class="cal-dots">${dots}</div></div>`;
+  }
+}
+
