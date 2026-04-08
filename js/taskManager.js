@@ -26,3 +26,13 @@ class TaskManager {
     return task;
   }
 
+  // READ ALL — returns the full tasks array
+  getAll() {
+    return this.tasks;
+  }
+
+  // READ ONE — finds a single task by its id
+  getById(id) {
+    return this.tasks.find(task => task.id === id);
+  }
+
