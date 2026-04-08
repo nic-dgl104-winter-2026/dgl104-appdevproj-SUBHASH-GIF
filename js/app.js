@@ -182,3 +182,75 @@ function renderCalendar() {
   }
 }
 
+// ---------- TASK ACTIONS ----------
+function changeStatus(id, status) { taskMgr.update(id, { status }); }
+
+function deleteTask(id) {
+  if (confirm("Delete this task?")) taskMgr.remove(id);
+}
+
+function filterTasks() {
+  const query = document.getElementById("search-input").value.toLowerCase();
+  document.querySelectorAll(".task-card").forEach(card => {
+    card.style.display = card.querySelector(".task-title").textContent.toLowerCase().includes(query) ? "block" : "none";
+  });
+}
+
+// ---------- MODAL ----------
+function openCreateModal() {
+  editingId = null;
+  document.getElementById("modal-title").textContent = "Create Task";
+  document.getElementById("task-form").reset();
+  document.getElementById("task-modal").style.display = "flex";
+}
+
+function openEditModal(id) {
+  const task = taskMgr.getById(id);
+  if (!task) return;
+  editingId = id;
+  document.getElementById("modal-title").textContent = "Edit Task";
+  document.getElementById("f-title").value           = task.title;
+  document.getElementById("f-desc").value            = task.description;
+  document.getElementById("f-assigned").value        = task.assignedTo;
+  document.getElementById("f-priority").value        = task.priority;
+  document.getElementById("f-status").value          = task.status;
+  document.getElementById("f-due").value             = task.dueDate;
+  document.getElementById("task-modal").style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("task-modal").style.display = "none";
+  editingId = null;
+}
+
+function saveTask() {
+  const title = document.getElementById("f-title").value.trim();
+  if (!title) { alert("Title is required!"); return; }
+  const data = {
+    title,
+    description: document.getElementById("f-desc").value,
+    assignedTo:  document.getElementById("f-assigned").value,
+    priority:    document.getElementById("f-priority").value,
+    status:      document.getElementById("f-status").value,
+    dueDate:     document.getElementById("f-due").value,
+  };
+  editingId ? taskMgr.update(editingId, data) : taskMgr.create(data);
+  closeModal();
+}
+
+// ---------- STARTUP ----------
+window.addEventListener("load", () => {
+  if (currentUser) {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("app").style.display          = "flex";
+    renderAll();
+  }
+  if (taskMgr.getAll().length === 0) {
+    taskMgr.create({ title: "Set up project repo",    priority: "High",   status: "Completed",   dueDate: "2025-03-10", assignedTo: "Subash" });
+    taskMgr.create({ title: "Build login UI",         priority: "High",   status: "In Progress", dueDate: "2025-03-22", assignedTo: "Subash" });
+    taskMgr.create({ title: "Write unit tests",       priority: "Medium", status: "To Do",       dueDate: "2025-03-28" });
+    taskMgr.create({ title: "Deploy to GitHub Pages", priority: "Low",    status: "To Do",       dueDate: "2025-04-01" });
+  }
+});
+
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
