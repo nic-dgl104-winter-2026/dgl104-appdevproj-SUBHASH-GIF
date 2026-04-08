@@ -101,3 +101,34 @@ class NotificationSystem {
 
 const notifier = new NotificationSystem();
 
+
+// 4. STRATEGY PATTERN — swappable sorting algorithms
+const SortStrategies = {
+
+  manual(tasks) {
+    return [...tasks];
+  },
+
+  priority(tasks) {
+    const rank = { High: 1, Medium: 2, Low: 3 };
+    return [...tasks].sort((a, b) => rank[a.priority] - rank[b.priority]);
+  },
+
+  deadline(tasks) {
+    return [...tasks].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+  }
+};
+
+class TaskSorter {
+  constructor() {
+    this.strategyFn = SortStrategies.manual;
+  }
+
+  setStrategy(name) {
+    this.strategyFn = SortStrategies[name];
+  }
+
+  sort(tasks) {
+    return this.strategyFn(tasks);
+  }
+}
